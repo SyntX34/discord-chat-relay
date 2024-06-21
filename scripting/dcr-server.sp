@@ -4,10 +4,11 @@
 #include <sdktools>
 #include <discord>
 #include <socket>
-#include <chatcolors>
+//#include <chatcolors>
+#include <morecolors>
 
 #undef REQUIRE_PLUGIN
-#include <chat-processor>
+//#include <chat-processor>
 
 #pragma newdecls required
 
@@ -37,16 +38,16 @@ char gS_BotToken[128];
 char gS_ServerTag[128];
 char gS_DiscordTag[128];
 
-bool gB_ChatProcessor;
+//bool gB_ChatProcessor;
 bool gB_ListeningToDiscord = false;
 
 
 public Plugin myinfo = 
 {
 	name = "Discord Chat Relay - Server",
-	author = "PaxPlay, Credits to Ryan \"FLOOR_MASTER\" Mannion, shavit and Deathknife",
+	author = "PaxPlay, Credits to Ryan \"FLOOR_MASTER\" Mannion, shavit and Deathknife, +SyntX",
 	description = "Chat relay between a sourcemod server and Discord.",
-	version = "1.0.0",
+	version = "1.1.1",
 	url = ""
 };
 
@@ -67,7 +68,7 @@ public void OnPluginStart()
 	
 	AutoExecConfig(true, "discord-chat-relay-server", "sourcemod");
 	
-	gB_ChatProcessor = LibraryExists("chat-processor");
+	//gB_ChatProcessor = LibraryExists("chat-processor");
 }
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
@@ -79,11 +80,11 @@ void UpdateCvars()
 {
 	char buffer[128];
 	gCV_ServerMessageTag.GetString(buffer, sizeof(buffer));
-	SCC_ReplaceColors(buffer, sizeof(buffer));
+	//SCC_ReplaceColors(buffer, sizeof(buffer));
 	FormatEx(gS_ServerTag, sizeof(gS_ServerTag), "%s", buffer);	// Update Gameserver Chat Tag
 	
 	gCV_DiscordMessageTag.GetString(buffer, sizeof(buffer));
-	SCC_ReplaceColors(buffer, sizeof(buffer));
+	//SCC_ReplaceColors(buffer, sizeof(buffer));
 	FormatEx(gS_DiscordTag, sizeof(gS_DiscordTag), "%s", buffer);	// Update Discord Chat Tag
 }
 
@@ -101,7 +102,7 @@ bool LoadConfig()
 		WriteFileLine(hFile, "}");
 		CloseHandle(hFile);
 		
-		LogError("[DCR] \"%s\" not found, creating!", sPath);
+		LogError("[Discord Chat Relay] \"%s\" not found, creating!", sPath);
 		return false;
 	}
 	
@@ -110,7 +111,7 @@ bool LoadConfig()
 	if(!kv.ImportFromFile(sPath))
 	{
 		delete kv;
-		LogError("[DCR] Couldnt import KeyValues from \"%s\"!", sPath);
+		LogError("[Discord Chat Relay] Couldnt import KeyValues from \"%s\"!", sPath);
 		
 		return false;
 	}
@@ -131,7 +132,7 @@ public void OnAllPluginsLoaded()
 	if (LoadConfig())
 		gDB_Bot = new DiscordBot(gS_BotToken);
 	else
-		LogError("Couldnt load the dcr config.");
+		LogError("Couldnt load the Discord Chat Relay config.");
 }
 
 public void OnConfigsExecuted()
@@ -156,9 +157,9 @@ public void OnConfigsExecuted()
 		
 		gAL_Clients = CreateArray();
 		
-		LogMessage("%s chat-processor. DCR %s be able to send messages.", gB_ChatProcessor ? "Found" : "Couldn\'t find", gB_ChatProcessor ? "will" : "won\'t");
+		//LogMessage("%s chat-processor. Discord Chat Relay %s be able to send messages.", gB_ChatProcessor ? "Found" : "Couldn\'t find", gB_ChatProcessor ? "will" : "won\'t");
 	
-		LogMessage("[DCR] Started Server Chat Relay server on port %d", port);
+		LogMessage("[Discord Chat Relay] Started Server Chat Relay server on port %d", port);
 	}
 }
 
@@ -184,7 +185,7 @@ public void ChannelList(DiscordBot bot, char[] guild, DiscordChannel Channel, an
 			Channel.GetName(name, sizeof(name));
 			gDB_Bot.StartListeningToChannel(Channel, OnMessage);
 			
-			LogMessage("[DCR] Started listening to channel %s (%s)", name, id);
+			LogMessage("[Discord Chat Relay] Started listening to channel %s (%s)", name, id);
 			gB_ListeningToDiscord = true;
 		}
 	}
@@ -201,9 +202,10 @@ public void OnMessage(DiscordBot Bot, DiscordChannel Channel, DiscordMessage mes
 	char sAuthor[128];
 	message.GetAuthor().GetUsername(sAuthor, sizeof(sAuthor));
 	
-	Format(sMessage, sizeof(sMessage), "%s \x01%s: %s", gS_DiscordTag, sAuthor, sMessage);
 	
-	PrintToChatAll(" %s", sMessage);
+	Format(sMessage, sizeof(sMessage), "%s %s: %s", gS_DiscordTag, sAuthor, sMessage);
+	
+	CPrintToChatAll("%s", sMessage);
 	Broadcast(INVALID_HANDLE, sMessage, sizeof(sMessage));
 }
 
@@ -265,7 +267,7 @@ bool Broadcast(Handle socket, const char[] message, int maxlength)
 	
 	if (socket != INVALID_HANDLE) // Prevent printing to the server chat, if message is by the server.
 	{
-		PrintToChatAll(" %s", message);
+		CPrintToChatAll("%s", message);
 	}
 	return true;
 }
@@ -355,7 +357,7 @@ void SendToDiscord(const char[] message, int maxlength)
 	char[] sMessage = new char[maxlength];
 	FormatEx(sMessage, maxlength, "%s", message);
 	
-	SCC_RemoveColors(sMessage, maxlength);
+	//SCC_RemoveColors(sMessage, maxlength);
 	
 	char sChannelID[64];
 	gCV_DiscordChatChannel.GetString(sChannelID, sizeof(sChannelID));
